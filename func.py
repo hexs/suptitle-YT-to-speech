@@ -21,6 +21,17 @@ BOLD = '\033[1m'
 ITALICIZED = '\033[3m'
 UNDERLINE = '\033[4m'
 
+preserve_dict = {
+    'ธนาคารพลังงาน': 'power bank',
+    'การเรียนรู้ของเครื่องจักร': 'Machine learning',
+    'การเรียนรู้ของเครื่อง': 'Machine learning',
+    'สมุดบันทึก Jupyter': 'jupyter notebook',
+    'การเรียนรู้อย่างลึกซึ้ง': 'deep learning',
+    'การเรียนรู้เชิงลึก': 'deep learning',
+    'เครือข่ายประสาท': 'neural network',
+
+}
+
 
 def replace_text(text):
     text = text.replace('...', ' ')
@@ -35,43 +46,52 @@ def translator(text):
             text = replace_text(text)
             translator = Translator()
             translated = translator.translate(text, dest='th').text
+            for phrase in preserve_dict:
+                translated = translated.replace(phrase, f' {preserve_dict[phrase]} ')
             break
         except Exception as e:
-            print(f'{RED}translator error \n{e}{ENDC}')
+            print(f'{RED}<def translator(text):> error \n{e}{ENDC}')
             time.sleep(10)
     return translated
 
 
-def get_transcript(video_id, en=False):
-    def for_en():
+def get_transcript(video_id, use_en_to_th=False):
+    '''
+    +---------------------------------------+--------------------------------------+
+    | 1. th                                 | skip if auto_generated_to_th         |
+    +---------------------------------------+--------------------------------------+
+    | 2. en -> th                           | 1. en -> th                          |
+    | 2. or automatic_creation(en) -> th    | 1. or automatic_creation(en) -> th   |
+    +---------------------------------------+--------------------------------------+
+    | 3. en - US -> th                      | 2. en - US -> th                     |
+    +---------------------------------------+--------------------------------------+
+    '''
+
+    try:
+        if use_en_to_th:
+            0 / 0
+        subtitle_lang = 'th'
+        transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=('th',))
+    except:
         try:
-            lang = 'en'
-            transcript = YouTubeTranscriptApi.get_transcript(video_id)
+            subtitle_lang = 'en'
+            transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=('en',))
         except:
             try:
-                lang = 'en-US'
+                subtitle_lang = 'en'
                 transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=('en-US',))
             except:
                 x = YouTubeTranscriptApi.list_transcripts(video_id)
                 print(x)
-        return transcript, lang
+                return
+    return transcript, subtitle_lang
 
-    if en:
-        return for_en()
-    else:
-        try:
-            lang = 'th'
-            transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=('th',))
-        except:
-            return for_en()
-    return transcript, lang
 
 def text_to_mp3(text, path_and_name):
     text = replace_text(text)
     url = f'https://texttospeech.responsivevoice.org/v1/text:synthesize?text={text}&lang=th&engine=g1&name=&pitch=0.5&rate=0.6&volume=1&key=kvfbSITh&gender=female'
     while True:
         try:
-            print(BLUE, 'download', text, ENDC)
             r = requests.get(url)
             if r.status_code == 200:
                 with open(path_and_name, 'wb') as f:
@@ -92,8 +112,11 @@ def play(path_and_name):
     pygame.mixer.init()
     sound1 = pygame.mixer.Sound(path_and_name)
     sound1.play()
-    time.sleep(sound1.get_length() - 0.1)
+    time.sleep(sound1.get_length() - 0.4)
 
 
 if __name__ == '__main__':
     pass
+    translator = Translator()
+    translated = translator.translate('text', dest='th').text
+    print(translated)
