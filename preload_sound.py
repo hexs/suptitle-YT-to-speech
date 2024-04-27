@@ -22,7 +22,7 @@ def read_data_from_json_file(json_file_name):
 
 
 url = 'https://www.youtube.com/watch?v=tpCFfeUEGs8&ab_channel=DanielBourke'
-# url = 'https://www.youtube.com/watch?v=spUNpyF58BY&ab_channel=3Blue1Brown'
+url = 'https://www.youtube.com/watch?v=ptkzzNaZb7U&ab_channel=MarkRober'
 
 data_from_url = {}
 for i in url.split('?')[1].split('&'):
@@ -91,7 +91,7 @@ if __name__ == '__main__':
                 write_data_to_json_file('transcript.json', transcript)
             if subtitle_lang == 'th':
                 line['text_translate_to_th'] = line['text']
-            text_to_mp3(line['text_translate_to_th'], f"data/{video_id}/mp3/{i}.mp3")
+            text_to_mp3(line['text_translate_to_th'], f"data/{video_id}/mp3/{i}")
 
             print(
                 f"{i}/{transcript_len} {dt_obj - dt_stamp0}\n"

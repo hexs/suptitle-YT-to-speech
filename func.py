@@ -89,22 +89,24 @@ def get_transcript(video_id, use_en_to_th=False):
 
 def text_to_mp3(text, path_and_name):
     text = replace_text(text)
-    url = f'https://texttospeech.responsivevoice.org/v1/text:synthesize?text={text}&lang=th&engine=g1&name=&pitch=0.5&rate=0.6&volume=1&key=kvfbSITh&gender=female'
-    while True:
-        try:
-            r = requests.get(url)
-            if r.status_code == 200:
-                with open(path_and_name, 'wb') as f:
-                    f.write(r.content)
-                break
-            else:
-                print(f'{YELLOW}status_code = {r.status_code}{ENDC}')
-                print(f'{RED}sleep 10s{ENDC}')
-                time.sleep(10)
-        except Exception as e:
-            print(f'{YELLOW} {e} {ENDC}')
-            print(f'{RED}sleep 5s{ENDC}')
-            time.sleep(5)
+    speeds = 0.6, 0.7
+    for speed in speeds:
+        url = f'https://texttospeech.responsivevoice.org/v1/text:synthesize?text={text}&lang=th&engine=g1&name=&pitch=0.5&rate={speed}&volume=1&key=kvfbSITh&gender=female'
+        while True:
+            try:
+                r = requests.get(url)
+                if r.status_code == 200:
+                    with open(f'{path_and_name}-{speed}.mp3', 'wb') as f:
+                        f.write(r.content)
+                    break
+                else:
+                    print(f'{YELLOW}status_code = {r.status_code}{ENDC}')
+                    print(f'{RED}sleep 10s{ENDC}')
+                    time.sleep(10)
+            except Exception as e:
+                print(f'{YELLOW} {e} {ENDC}')
+                print(f'{RED}sleep 5s{ENDC}')
+                time.sleep(5)
 
 
 def play(path_and_name):
