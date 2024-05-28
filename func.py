@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import json
+import re
 import requests
 import os
 import time
@@ -81,9 +82,13 @@ def get_transcript(video_id, use_en_to_th=False):
                 subtitle_lang = 'en'
                 transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=('en-US',))
             except:
-                x = YouTubeTranscriptApi.list_transcripts(video_id)
-                print(x)
-                return
+                try:
+                    subtitle_lang = 'en'
+                    transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=('en-GB',))
+                except:
+                    x = YouTubeTranscriptApi.list_transcripts(video_id)
+                    print(x)
+                    0 / 0
     return transcript, subtitle_lang
 
 
@@ -109,6 +114,50 @@ def text_to_mp3(text, path_and_name):
                 time.sleep(5)
 
 
+def text_to_mp3_v2(text, path_and_name):
+    base_url = "https://api.soundoftext.com"
+    create_sound_endpoint = base_url + "/sounds"
+    get_sound_endpoint = base_url + "/sounds/{}"
+
+    payload = {
+        "engine": "Google",
+        "static": {
+            "text": text,
+            "voice": 'th-TH',
+            "rate": '0.7'
+        }
+    }
+
+    headers = {
+        "Content-Type": "application/json"
+    }
+
+    create_sound_response = requests.post(create_sound_endpoint, headers=headers, data=json.dumps(payload))
+
+    if create_sound_response.status_code == 200:
+        sound_id = create_sound_response.json()["id"]
+
+        get_sound_response = requests.get(get_sound_endpoint.format(sound_id))
+
+        if get_sound_response.status_code == 200:
+            sound_status = get_sound_response.json()["status"]
+
+            if sound_status == "Done":
+                sound_url = get_sound_response.json()["location"]
+
+                speed = 0.5
+                with open(f'{path_and_name}-{speed}.mp3', 'wb') as f:
+                    f.write(requests.get(sound_url).content)
+
+                return "MP3 file saved successfully."
+            else:
+                return "Sound creation is still pending. Please try again later."
+        else:
+            return "Failed to retrieve sound status."
+    else:
+        return "Failed to create sound."
+
+
 def play(path_and_name):
     pygame.init()
     pygame.mixer.init()
@@ -117,8 +166,35 @@ def play(path_and_name):
     time.sleep(sound1.get_length() - 0.4)
 
 
+def get_youtube_thumbnail(video_id, save_path):
+    print('get_youtube_thumbnail')
+    thumbnail_url = f'https://img.youtube.com/vi/{video_id}/maxresdefault.jpg'
+    response = requests.get(thumbnail_url)
+    if response.status_code == 200:
+        with open(save_path, 'wb') as file:
+            file.write(response.content)
+    else:
+        print("Failed to download thumbnail")
+
+    return thumbnail_url
+
+
+def get_youtube_video_id(youtube_url):
+    video_id_match = re.search(r'(?:v=|\/)([0-9A-Za-z_-]{11}).*', youtube_url)
+    if not video_id_match:
+        return None
+    video_id = video_id_match.group(1)
+    with open('video_id.json', 'w') as f:
+        f.write(json.dumps(video_id))
+    if 'thumbnail.jpg' not in os.listdir(f'static/{video_id}'):
+        get_youtube_thumbnail(video_id, f'static/{video_id}/thumbnail.jpg')
+    return video_id
+
+
 if __name__ == '__main__':
-    pass
-    translator = Translator()
-    translated = translator.translate('text', dest='th').text
-    print(translated)
+    # translator = Translator()
+    # translated = translator.translate('text', dest='th').text
+    # print(translated)
+
+    sound_url = text_to_mp3_v2('january', 'x.mp3')
+    print("Sound URL:", sound_url)

@@ -1,5 +1,9 @@
+import json
+from datetime import datetime, timedelta
 from func import *
-from preload_sound import video_id
+
+with open('video_id.json') as f:
+    video_id = json.loads(f.read())
 
 with open(f'data/{video_id}/transcript.json', encoding='utf-8') as f:
     string = f.read()
@@ -45,5 +49,8 @@ for i in range(len(transcript)):
             print()
             if lag > 2:
                 speed = 0.7
-            play(f'data/{video_id}/mp3/{i}-{speed}.mp3')
+            try:
+                play(f'data/{video_id}/mp3/{i}-{speed}.mp3')
+            except:
+                play(f'data/{video_id}/mp3/{i}-{0.5}.mp3')
             break
